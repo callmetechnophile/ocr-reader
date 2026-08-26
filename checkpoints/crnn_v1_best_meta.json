@@ -1,0 +1,9 @@
+{
+  "model": "crnn_v1",
+  "epoch": 39,
+  "vocab_version": "v1",
+  "image_height": 32,
+  "cer": 0.45845,
+  "wer": 0.95701,
+  "metric": 0.45845
+}

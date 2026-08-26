@@ -1,0 +1,36 @@
+# CRNN Sanity Overfitting Configuration
+
+model:
+  name: "crnn_sanity"
+  in_channels: 1
+  lstm_hidden: 256
+  lstm_layers: 2
+  dropout: 0.0
+
+data:
+  image_height: 32
+  min_width: 32
+  max_width: 1024
+  train_manifest: "./datasets/synthetic/labels.tsv"
+  val_manifest: null
+  vocab_path: "./models/ocr/vocab.json"
+
+augmentation:
+  rotation_degrees: 0.0
+  gaussian_noise: false
+  blur_probability: 0.0
+  contrast_probability: 0.0
+  jpeg_probability: 0.0
+
+training:
+  batch_size: 8
+  epochs: 50
+  learning_rate: 0.001
+  weight_decay: 0.0
+  gradient_clip: 5.0
+  mixed_precision: false
+  num_workers: 0
+
+checkpoint:
+  directory: "./checkpoints"
+  save_best: true

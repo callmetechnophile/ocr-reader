@@ -1,0 +1,36 @@
+# CRNN V1 Training Configuration
+
+model:
+  name: "crnn_v1"
+  in_channels: 1
+  lstm_hidden: 256
+  lstm_layers: 2
+  dropout: 0.1
+
+data:
+  image_height: 32
+  min_width: 32
+  max_width: 1024
+  train_manifest: "./datasets/synthetic/labels.tsv"
+  val_manifest: "./datasets/synthetic/labels.tsv"
+  vocab_path: "./models/ocr/vocab.json"
+
+augmentation:
+  rotation_degrees: 2.0
+  gaussian_noise: true
+  blur_probability: 0.2
+  contrast_probability: 0.3
+  jpeg_probability: 0.2
+
+training:
+  batch_size: 16
+  epochs: 25
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  gradient_clip: 5.0
+  mixed_precision: true
+  num_workers: 0
+
+checkpoint:
+  directory: "./checkpoints"
+  save_best: true

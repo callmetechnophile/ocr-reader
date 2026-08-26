@@ -1,0 +1,31 @@
+services:
+  ocr-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: textbook-ocr-service
+    ports:
+      - "8000:8000"
+    environment:
+      - OCR_APP_NAME=Textbook OCR Microservice
+      - OCR_APP_ENV=development
+      - OCR_DEBUG=true
+      - OCR_HOST=0.0.0.0
+      - OCR_PORT=8000
+      - OCR_MAX_FILE_SIZE_MB=250
+      - OCR_RENDER_DPI=150
+      - OCR_TEXT_QUALITY_THRESHOLD=0.70
+      - OCR_STORAGE_PATH=/app/data
+      - OCR_WORKER_COUNT=4
+      - OCR_LOG_LEVEL=INFO
+      - OCR_BASELINE_BACKEND=baseline
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

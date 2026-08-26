@@ -1,0 +1,7 @@
+{
+  "model": "crnn_v1",
+  "dataset": "textbook_test_v1",
+  "cer": 0.97654,
+  "wer": 1.0,
+  "samples": 50
+}
