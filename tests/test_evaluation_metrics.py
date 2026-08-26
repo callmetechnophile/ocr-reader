@@ -202,7 +202,7 @@ def test_toon_evaluator_valid_and_missing(tmp_path):
     assert res_missing["toon_file_found"] is False
 
     # Valid TOON
-    toon_file = tmp_path / "sample_parsed.toon"
+    toon_file = tmp_path / "sample.toon"
     toon_content = {
         "format": "TOON_V1",
         "document_id": "doc_123",

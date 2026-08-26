@@ -98,27 +98,40 @@ data/processed/{document_id}/
 
 ## 3. Quickstart & Benchmark CLI
 
-### A. Place a Test Textbook
-You can test the system with any PDF textbook. For example:
-- Download `ModernC.pdf` from:
-  `https://github.com/FrenzyExists/programming-books/blob/master/C/ModernC.pdf`
-- Place it in `data/raw/ModernC.pdf`.
+The CLI is completely document-agnostic and supports user-configurable input, output, debug, and TOON directories across Windows, Linux, and macOS.
 
-### B. Run the Benchmark CLI
+### Generic Usage Examples
 
 ```bash
-# Process arbitrary PDF textbook
-python scripts/test_book.py data/raw/ModernC.pdf
+# 1. Basic Document Processing
+python scripts/test_book.py "<PDF_PATH>"
 
-# Process specific page range (e.g. for development)
-python scripts/test_book.py data/raw/ModernC.pdf --start-page 1 --end-page 20
+# 2. Generate Canonical TOON File in Custom Directory
+python scripts/test_book.py "<PDF_PATH>" --toon "<TOON_OUTPUT_DIRECTORY>"
 
-# Enable visual debug overlays (renders region bounding boxes and labels to debug/)
-python scripts/test_book.py data/raw/ModernC.pdf --start-page 1 --end-page 10 --debug
+# 3. Generate TOON File and Visual Debug Overlays
+python scripts/test_book.py "<PDF_PATH>" --toon "<TOON_OUTPUT_DIRECTORY>" --debug
 
-# Force reprocessing of already cached pages
-python scripts/test_book.py data/raw/ModernC.pdf --force
+# 4. Custom Processed Output Directory
+python scripts/test_book.py "<PDF_PATH>" --output "<PROCESSED_OUTPUT_DIRECTORY>"
+
+# 5. Full Custom Configuration (Input, Processed, TOON, Debug, Overwrite Force)
+python scripts/test_book.py \
+    "<PDF_PATH>" \
+    --output "<PROCESSED_OUTPUT_DIRECTORY>" \
+    --toon "<TOON_OUTPUT_DIRECTORY>" \
+    --debug \
+    --debug-output "<DEBUG_OUTPUT_DIRECTORY>" \
+    --force
+
+# 6. Specific Page Range
+python scripts/test_book.py "<PDF_PATH>" --start-page 1 --end-page 25
 ```
+
+### TOON Naming & Overwrite Protection
+- The `.toon` filename is dynamically derived from the PDF stem: `<pdf_stem>.toon` (e.g., `Engineering Mathematics.pdf` $\rightarrow$ `Engineering Mathematics.toon`, `book.final.v2.pdf` $\rightarrow$ `book.final.v2.toon`).
+- If `<TOON_OUTPUT_DIRECTORY>/<pdf_stem>.toon` already exists, the file is safely preserved unless `--force` is provided.
+- Target directories are automatically created if they do not exist.
 
 ---
 
