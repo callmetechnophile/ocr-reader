@@ -1,0 +1,6 @@
+-r requirements.txt
+python-Levenshtein
+apted
+zss
+lxml
+# Polygon3 is optional for polygon geometries where platform C++ compiler is present
