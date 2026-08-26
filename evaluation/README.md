@@ -9,14 +9,14 @@ It is maintained separately in `evaluation_branch` so that evaluation dependenci
 ## 1. Branch Architecture
 
 ```text
-main_branch (Production OCR Core)
+main (Production OCR Core)
 │
 ├── app/ (OCR service, PyMuPDF, pdfplumber, Layout CNN, CRNN, Chunking, TOON)
 ├── models/
 ├── scripts/
 └── requirements.txt
 
-evaluation_branch (Evaluation & Benchmarks)
+evaluation (Evaluation & Benchmarks)
 │
 ├── evaluation/
 │   ├── metrics/ (OCR, Layout, Structure, Reading Order, Chunk, TOON)
@@ -136,14 +136,14 @@ Evaluation results are saved into `data/evaluation_results/<document_id>/`:
 
 ## 7. Future Git Merge Workflow
 
-When ready to merge the evaluation subsystem into `main_branch`:
+When ready to merge the evaluation subsystem into `main`:
 
 ```bash
 # 1. Switch to main branch
-git checkout main_branch
+git checkout main
 
 # 2. Merge evaluation branch without modifying core runtime files
-git merge evaluation_branch
+git merge evaluation
 
 # 3. Verify core tests still pass without evaluation requirements
 pytest -v
