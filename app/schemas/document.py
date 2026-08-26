@@ -103,6 +103,7 @@ class DocumentManifest(BaseModel):
     partial_run: bool = False
     page_range: Optional[list[int]] = None
     metadata: dict[str, Any] = Field(default_factory=dict)
+    toon: Optional[dict[str, Any]] = Field(default=None, description="TOON export info {'enabled': bool, 'path': str}")
 
 
 class DocumentMetadata(BaseModel):
@@ -129,6 +130,10 @@ class ProcessingReport(BaseModel):
     extraction: dict[str, int] = Field(default_factory=dict)
     structure: dict[str, int] = Field(default_factory=dict)
     performance: dict[str, Any] = Field(default_factory=dict)
+    toon_enabled: bool = False
+    toon_output_path: Optional[str] = None
+    toon_size_bytes: Optional[int] = None
+    toon_generation_time: Optional[float] = None
 
 
 class LocalJobState(BaseModel):

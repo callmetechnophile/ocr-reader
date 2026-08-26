@@ -46,7 +46,7 @@ def test_toon_writer_and_validator(tmp_path: Path):
         }
     ]
 
-    output_toon = tmp_path / "SampleTextbook_parsed.toon"
+    output_toon = tmp_path / "SampleTextbook.toon"
     written_path = writer.write(
         document_id=doc_id,
         filename=filename,
@@ -95,7 +95,7 @@ async def test_end_to_end_pipeline_with_toon(tmp_path: Path, digital_pdf_path: P
         generate_toon=True,
     )
 
-    expected_toon_name = f"{digital_pdf_path.stem}_parsed.toon"
+    expected_toon_name = f"{digital_pdf_path.stem}.toon"
     toon_file = out_dir / expected_toon_name
     assert toon_file.exists()
     assert (out_dir / "audit" / "toon_validation.json").exists()

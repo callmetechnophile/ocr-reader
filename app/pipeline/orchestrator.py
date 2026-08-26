@@ -89,12 +89,13 @@ class DocumentPipelineOrchestrator:
         start_page: Optional[int] = None,
         end_page: Optional[int] = None,
         debug: bool = False,
+        debug_output_dir: Optional[str | Path] = None,
         force: bool = False,
         generate_toon: bool = False,
-        toon_output_path: Optional[str | Path] = None,
+        toon_output_dir: Optional[str | Path] = None,
         progress_callback: Optional[Callable[..., None]] = None,
     ) -> DocumentManifest:
-        p_path = Path(pdf_path)
+        p_path = Path(pdf_path).resolve()
         if not p_path.exists():
             raise FileNotFoundError(f"PDF file not found at: {p_path}")
 
@@ -107,7 +108,7 @@ class DocumentPipelineOrchestrator:
         filename = p_path.name
 
         # Resolve output directory
-        base_out_dir = Path(output_dir) if output_dir else Path("./data/processed") / doc_id
+        base_out_dir = Path(output_dir).resolve() if output_dir else (Path("./data/processed") / doc_id).resolve()
         base_out_dir.mkdir(parents=True, exist_ok=True)
         pages_dir = base_out_dir / "pages"
         pages_dir.mkdir(exist_ok=True)
@@ -115,9 +116,9 @@ class DocumentPipelineOrchestrator:
         chapters_dir.mkdir(exist_ok=True)
         chunks_dir = base_out_dir / "chunks"
         chunks_dir.mkdir(exist_ok=True)
-        debug_dir = base_out_dir / "debug"
+        debug_dir = Path(debug_output_dir).resolve() if debug_output_dir else (base_out_dir / "debug")
         if debug:
-            debug_dir.mkdir(exist_ok=True)
+            debug_dir.mkdir(parents=True, exist_ok=True)
 
         log_event(logger, f"Starting document pipeline processing for {doc_id}", document_id=doc_id, stage="pipeline_start")
 
@@ -378,6 +379,16 @@ class DocumentPipelineOrchestrator:
         if debug:
             paths_dict["debug"] = "debug/"
 
+        # Determine TOON configuration
+        toon_is_enabled = bool(generate_toon or toon_output_dir is not None)
+        toon_info: dict[str, Any] = {"enabled": toon_is_enabled, "path": None}
+        toon_out = None
+        if toon_is_enabled:
+            target_toon_dir = Path(toon_output_dir).resolve() if toon_output_dir else base_out_dir
+            target_toon_dir.mkdir(parents=True, exist_ok=True)
+            toon_out = target_toon_dir / f"{p_path.stem}.toon"
+            toon_info["path"] = str(toon_out)
+
         manifest = DocumentManifest(
             document_id=doc_id,
             filename=filename,
@@ -399,6 +410,7 @@ class DocumentPipelineOrchestrator:
                 "pages_failed": len(errors_logged),
                 "errors": errors_logged,
             },
+            toon=toon_info,
         )
         self._save_json(base_out_dir / "manifest.json", manifest.model_dump())
         await self.storage.put_json(f"processed/{doc_id}/manifest.json", manifest.model_dump())
@@ -417,25 +429,43 @@ class DocumentPipelineOrchestrator:
         timings["structural_validation_ms"] = round((time.perf_counter() - t0_audit) * 1000, 2)
 
         # Step 12: Optional TOON serialization & validation
-        if generate_toon:
+        toon_size_bytes = None
+        toon_duration_s = None
+        if toon_is_enabled and toon_out is not None:
             t0_toon = time.perf_counter()
-            toon_out = Path(toon_output_path) if toon_output_path else base_out_dir / f"{p_path.stem}_parsed.toon"
-            self.toon_writer.write(
-                document_id=doc_id,
-                filename=filename,
-                manifest=manifest,
-                pages=processed_page_schemas,
-                chapters=chapters,
-                chunks=all_chunks,
-                output_path=toon_out,
-            )
-            ToonValidator.validate(
-                toon_path=toon_out,
-                expected_document_id=doc_id,
-                manifest=manifest,
-                output_validation_path=audit_dir / "toon_validation.json",
-            )
-            timings["toon_export_ms"] = round((time.perf_counter() - t0_toon) * 1000, 2)
+            should_write_toon = True
+            if toon_out.exists() and not force:
+                log_event(
+                    logger,
+                    f"TOON output already exists at {toon_out}. Preserving file (use --force to overwrite).",
+                    document_id=doc_id,
+                    stage="toon_export",
+                )
+                should_write_toon = False
+
+            if should_write_toon:
+                self.toon_writer.write(
+                    document_id=doc_id,
+                    filename=filename,
+                    manifest=manifest,
+                    pages=processed_page_schemas,
+                    chapters=chapters,
+                    chunks=all_chunks,
+                    output_path=toon_out,
+                )
+                try:
+                    ToonValidator.validate(
+                        toon_path=toon_out,
+                        expected_document_id=doc_id,
+                        manifest=manifest,
+                        output_validation_path=audit_dir / "toon_validation.json",
+                    )
+                except Exception as e:
+                    log_event(logger, f"TOON validation warning: {e}", document_id=doc_id, stage="toon_export", level=logging.WARNING)
+            toon_duration_s = time.perf_counter() - t0_toon
+            timings["toon_export_ms"] = round(toon_duration_s * 1000, 2)
+            if toon_out.exists():
+                toon_size_bytes = toon_out.stat().st_size
 
         # Step 13: Performance & Processing Reports
         total_duration_s = time.perf_counter() - t0_total
@@ -476,6 +506,10 @@ class DocumentPipelineOrchestrator:
                 "total_seconds": round(total_duration_s, 2),
                 "average_page_ms": avg_page_ms,
             },
+            toon_enabled=toon_is_enabled,
+            toon_output_path=str(toon_out) if toon_out else None,
+            toon_size_bytes=toon_size_bytes,
+            toon_generation_time=round(toon_duration_s, 4) if toon_duration_s is not None else None,
         )
         self._save_json(base_out_dir / "report.json", report.model_dump())
 
